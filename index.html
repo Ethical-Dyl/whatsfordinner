@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What's For Dinner?!</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin: 0 0 10px 0;
+      font-size: clamp(2rem, 5vw, 3rem);
+      animation: pulse 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes pulse {
+      from { text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+      to { text-shadow: 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.1); }
+    }
+    
+    .subtitle {
+      color: rgba(255,255,255,0.9);
+      font-size: 1.1em;
+      margin: 0;
+    }
+    
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+    }
+    
+    .controls {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      min-width: 320px;
+      max-width: 400px;
+    }
+    
+    .wheel-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .wheel-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    canvas {
+      border: 8px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: filter 0.3s ease;
+      background: #fff;
+    }
+    
+    canvas.spinning {
+      filter: blur(1px);
+    }
+    
+    .pointer {
+      width: 0;
+      height: 0;
+      border-left: 25px solid transparent;
+      border-right: 25px solid transparent;
+      border-bottom: 40px solid #ff4757;
+      position: absolute;
+      top: -20px;
+      z-index: 10;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+      animation: bounce 1s ease-in-out infinite alternate;
+    }
+    
+    @keyframes bounce {
+      from { transform: translateY(0px); }
+      to { transform: translateY(-3px); }
+    }
+    
+    .filter-section {
+      margin-bottom: 25px;
+    }
+    
+    .filter-section h3 {
+      margin: 0 0 15px 0;
+      color: #333;
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      background: #f8f9fa;
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .checkbox-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .checkbox-item:hover::before {
+      left: 100%;
+    }
+    
+    .checkbox-item:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+      margin-right: 12px;
+      transform: scale(1.3);
+      accent-color: #667eea;
+    }
+    
+    .checkbox-item label {
+      font-weight: 500;
+      cursor: pointer;
+      flex: 1;
+    }
+    
+    .checkbox-item.checked {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-color: #667eea;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .meal-count {
+      background: #f0f8ff;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 0.95em;
+      color: #333;
+      font-weight: 500;
+      text-align: center;
+      border-left: 4px solid #667eea;
+    }
+    
+    .spin-button-container {
+      text-align: center;
+    }
+    
+    #spinBtn {
+      padding: 18px 35px;
+      background: linear-gradient(45deg, #ff4757, #ff6b7d);
+      color: white;
+      border: none;
+      font-size: 1.3em;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #spinBtn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    #spinBtn:hover:not(:disabled)::before {
+      left: 100%;
+    }
+    
+    #spinBtn:hover:not(:disabled) {
+      background: linear-gradient(45deg, #ff3742, #ff5722);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.6);
+    }
+    
+    #spinBtn:active:not(:disabled) {
+      transform: translateY(-1px) scale(1.02);
+    }
+    
+    #spinBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    #result {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 500px;
+      transition: all 0.3s ease;
+    }
+    
+    #result.show {
+      font-size: 1.4em;
+      color: #333;
+      font-weight: bold;
+      animation: resultPop 0.5s ease-out;
+    }
+    
+    @keyframes resultPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    #result a {
+      color: #667eea;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    
+    #result a:hover {
+      background: rgba(102, 126, 234, 0.1);
+      border-bottom-color: #667eea;
+    }
+    
+    .stats-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 15px;
+      margin-top: 15px;
+    }
+    
+    .stats-section h4 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 1em;
+    }
+    
+    .time-breakdown {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9em;
+      color: #666;
+    }
+    
+    .error-message {
+      background: #ffe6e6;
+      color: #d63031;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #d63031;
+      font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .controls {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 20px;
+      }
+      
+      canvas {
+        width: 280px !important;
+        height: 280px !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 15px;
+      }
+      
+      .controls {
+        padding: 20px;
+      }
+      
+      canvas {
+        width: 250px !important;
+        height: 250px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🍽️ What's for Dinner? 🍽️</h1>
+    <p class="subtitle">Spin the wheel to discover your next delicious meal!</p>
+  </div>
+  
+  <div class="main-content">
+    <div class="controls">
+      <div class="filter-section">
+        <h3>⏰ Time Filters</h3>
+        <div class="checkbox-group">
+          <div class="checkbox-item" data-checkbox="under10">
+            <input type="checkbox" id="under10">
+            <label for="under10">Quick & Easy (≤10 min)</label>
+          </div>
+          <div class="checkbox-item" data-checkbox="under30">
+            <input type="checkbox" id="under30">
+            <label for="under30">Fast Meals (≤30 min)</label>
+          </div>
+          <div class="checkbox-item" data-checkbox="under60">
+            <input type="checkbox" id="under60">
+            <label for="under60">Standard Prep (≤60 min)</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="meal-count" id="mealCount">Loading meals...</div>
+      
+      <div class="stats-section">
+        <h4>📊 Meal Distribution</h4>
+        <div class="time-breakdown" id="timeBreakdown">
+          <span>≤10min: <strong id="count10">0</strong></span>
+          <span>≤30min: <strong id="count30">0</strong></span>
+          <span>≤60min: <strong id="count60">0</strong></span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="wheel-section">
+      <div class="spin-button-container">
+        <button id="spinBtn">🎡 Spin the Wheel!</button>
+      </div>
+      
+      <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="wheel"></canvas>
+      </div>
+      
+      <div id="result">Click "Spin the Wheel" to discover your dinner!</div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultDiv = document.getElementById('result');
+    const mealCountDiv = document.getElementById('mealCount');
+    const checkboxItems = document.querySelectorAll('.checkbox-item');
+    const timeBreakdownDiv = document.getElementById('timeBreakdown');
+    
+    const allMeals = [
+      // 10-minute meals
+      { name: "BBQ Chicken Tacos", time: 10, link: "https://www.eatingwell.com/recipe/270288/bbq-chicken-tacos-with-red-cabbage-slaw/" },
+      { name: "Peanut Noodles", time: 10, link: "https://www.thesavorychopstick.com/recipe/spicy-peanut-noodles/" },
+      { name: "Steak Fajita Wraps", time: 10, link: "https://www.juliapacheco.com/steak-fajita-quesadillas/" },
+      { name: "Beef Taco Bowls", time: 10, link: "#" },
+      { name: "Spicy Peanut Noodles", time: 10, link: "https://www.thesavorychopstick.com/spicy-peanut-noodles/" },
+      { name: "Rotisserie Chicken Salad", time: 10, link: "#" },
+      { name: "Avocado Toast Deluxe", time: 5, link: "#" },
+      { name: "Caprese Wrap", time: 8, link: "#" },
+      
+      // 30-minute meals
+      { name: "Chicken Taco Bowls", time: 30, link: "https://www.allrecipes.com/recipe/242481/chicken-taco-bowls-with-pinto-beans-and-rice/" },
+      { name: "Greek Quesadillas", time: 30, link: "https://damndelicious.net/2016/07/23/greek-quesadillas/" }, 
+      { name: "Creamy Garlic Chicken", time: 30, link: "https://www.thesavorychopstick.com/creamy-garlic-chicken/" },
+      { name: "Honey Garlic Salmon", time: 25, link: "#" },
+      { name: "Beef Stir Fry", time: 20, link: "#" },
+      { name: "Chicken Caesar Pasta", time: 25, link: "#" },
+      { name: "Veggie Fried Rice", time: 15, link: "#" },
+      
+      // 60-minute meals
+      { name: "Lasagna Soup", time: 45, link: "https://eatinginstantly.com/easy-instant-pot-lasagna-soup/" },
+      { name: "Stuffed Bell Peppers", time: 50, link: "#" },
+      { name: "Chicken Parmesan", time: 55, link: "#" },
+      { name: "Beef Stroganoff", time: 40, link: "#" },
+      { name: "Homemade Pizza", time: 60, link: "#" },
+      
+      // Over 60 minute meals (excluded by default)
+      { name: "Korean Beef Bulgogi", time: 180, link: "https://damndelicious.net/2019/04/21/korean-beef-bulgogi/" },
+      { name: "Slow Cooker Pot Roast", time: 240, link: "#" },
+      { name: "Braised Short Ribs", time: 150, link: "#" }
+    ];
+
+    let spinning = false;
+    let currentRotation = 0;
+
+    // Enhanced checkbox styling and functionality
+    checkboxItems.forEach(item => {
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      const label = item.querySelector('label');
+      
+      checkbox.addEventListener('change', () => {
+        updateCheckboxStyling();
+        updateMealStats();
+        drawWheel(getFilteredMeals());
+      });
+      
+      item.addEventListener('click', (e) => {
+        if (e.target.type !== 'checkbox') {
+          checkbox.checked = !checkbox.checked;
+          checkbox.dispatchEvent(new Event('change'));
+        }
+      });
+      
+      // Add keyboard support
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          checkbox.checked = !checkbox.checked;
+          checkbox.dispatchEvent(new Event('change'));
+        }
+      });
+      
+      item.setAttribute('tabindex', '0');
+    });
+
+    function updateCheckboxStyling() {
+      checkboxItems.forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+          item.classList.add('checked');
+        } else {
+          item.classList.remove('checked');
+        }
+      });
+    }
+
+    function calculateOptimalSize(itemCount) {
+      const minSize = 300;
+      const maxSize = 400;
+      if (itemCount <= 6) return maxSize;
+      if (itemCount <= 12) return 350;
+      return Math.max(minSize, maxSize - (itemCount - 12) * 10);
+    }
+
+    function getTextSize(itemCount) {
+      if (itemCount <= 8) return 14;
+      if (itemCount <= 12) return 12;
+      if (itemCount <= 16) return 11;
+      return 10;
+    }
+
+    function wrapText(text, maxLength) {
+      if (text.length <= maxLength) return [text];
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        if ((currentLine + word).length <= maxLength) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    }
+
+    function getVibrantColor(index, total) {
+      // Enhanced color palette with better contrast
+      const colors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+        '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2',
+        '#A3E4D7', '#F9E79F', '#D5A6BD', '#AED6F1', '#A9DFBF'
+      ];
+      
+      if (total <= colors.length) {
+        return colors[index];
+      } else {
+        // Generate HSL colors for larger sets
+        const hue = (index * 360 / total) % 360;
+        const saturation = 65 + (index % 3) * 10;
+        const lightness = 50 + (index % 2) * 10;
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      }
+    }
+
+    function drawWheel(items, rotation = 0) {
+      if (items.length === 0) {
+        // Clear canvas when no items
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      
+      const size = calculateOptimalSize(items.length);
+      canvas.width = size;
+      canvas.height = size;
+      
+      const center = size / 2;
+      const radius = center - 30;
+      const arcSize = (2 * Math.PI) / items.length;
+      const fontSize = getTextSize(items.length);
+      
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate(rotation);
+      
+      // Draw segments
+      for (let i = 0; i < items.length; i++) {
+        const angle = i * arcSize;
+        
+        // Draw segment
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, angle, angle + arcSize);
+        ctx.closePath();
+        
+        ctx.fillStyle = getVibrantColor(i, items.length);
+        ctx.fill();
+        
+        // Draw border
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw text
+        ctx.save();
+        ctx.rotate(angle + arcSize / 2);
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        
+        // Handle text wrapping
+        const maxTextLength = Math.max(8, Math.floor(radius / fontSize * 0.9));
+        const textLines = wrapText(items[i].name, maxTextLength);
+        const textRadius = radius * 0.75;
+        
+        if (textLines.length === 1) {
+          ctx.fillText(textLines[0], textRadius, 0);
+        } else {
+          const lineHeight = fontSize * 1.1;
+          const startY = -(textLines.length - 1) * lineHeight / 2;
+          textLines.forEach((line, index) => {
+            ctx.fillText(line, textRadius, startY + index * lineHeight);
+          });
+        }
+        
+        ctx.restore();
+      }
+      
+      // Draw center circle with gradient
+      const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
+      centerGradient.addColorStop(0, '#fff');
+      centerGradient.addColorStop(1, '#ddd');
+      
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, 2 * Math.PI);
+      ctx.fillStyle = centerGradient;
+      ctx.fill();
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      
+      ctx.restore();
+    }
+
+    function getFilteredMeals() {
+      const checkboxes = {
+        under10: document.getElementById('under10'),
+        under30: document.getElementById('under30'),
+        under60: document.getElementById('under60')
+      };
+      
+      const maxTimes = [];
+      if (checkboxes.under10.checked) maxTimes.push(10);
+      if (checkboxes.under30.checked) maxTimes.push(30);
+      if (checkboxes.under60.checked) maxTimes.push(60);
+      
+      if (maxTimes.length === 0) {
+        // No checkboxes selected — exclude meals over 60 minutes
+        return allMeals.filter(meal => meal.time <= 60);
+      }
+
+      return allMeals.filter(meal => maxTimes.some(time => meal.time <= time));
+    }
+
+    function updateMealStats() {
+      const filteredMeals = getFilteredMeals();
+      
+      // Update meal count
+      mealCountDiv.textContent = `${filteredMeals.length} meals available`;
+      
+      // Update time breakdown
+      const count10 = allMeals.filter(meal => meal.time <= 10).length;
+      const count30 = allMeals.filter(meal => meal.time <= 30 && meal.time > 10).length;
+      const count60 = allMeals.filter(meal => meal.time <= 60 && meal.time > 30).length;
+      
+      document.getElementById('count10').textContent = count10;
+      document.getElementById('count30').textContent = count30;
+      document.getElementById('count60').textContent = count60;
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      
+      const meals = getFilteredMeals();
+      if (meals.length === 0) {
+        resultDiv.innerHTML = '<div class="error-message">❌ No meals match your filters! Try selecting some time options.</div>';
+        resultDiv.className = "show";
+        return;
+      }
+
+      spinning = true;
+      spinBtn.disabled = true;
+      spinBtn.textContent = "🌪️ Spinning...";
+      canvas.classList.add('spinning');
+      resultDiv.textContent = "🎲 The wheel is spinning...";
+      resultDiv.classList.remove("show");
+      
+      const selectedIndex = Math.floor(Math.random() * meals.length);
+      const arcSize = (2 * Math.PI) / meals.length;
+      
+      // Calculate target rotation for better visual appeal
+      const spins = 4 + Math.random() * 4; // 4-8 full rotations
+      const targetAngle = (Math.PI / 2) - (arcSize * selectedIndex + arcSize / 2);
+      const targetRotation = currentRotation + (2 * Math.PI * spins) + targetAngle;
+      
+      const duration = 3500 + Math.random() * 1500; // 3.5-5 seconds
+      const startTime = performance.now();
+      const startRotation = currentRotation;
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Enhanced easing with bounce effect at the end
+        let easeProgress;
+        if (progress < 0.9) {
+          easeProgress = 1 - Math.pow(1 - progress / 0.9, 3);
+        } else {
+          const bounceProgress = (progress - 0.9) / 0.1;
+          easeProgress = 1 - 0.02 * Math.sin(bounceProgress * Math.PI * 4) * (1 - bounceProgress);
+        }
+        
+        currentRotation = startRotation + (targetRotation - startRotation) * easeProgress;
+        drawWheel(meals, currentRotation);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          const finalMeal = meals[selectedIndex];
+          const linkHtml = finalMeal.link && finalMeal.link !== "#" 
+            ? `<a href="${finalMeal.link}" target="_blank" rel="noopener">${finalMeal.name}</a>` 
+            : finalMeal.name;
+          
+          resultDiv.innerHTML = `🎉 <strong>Tonight's Dinner:</strong><br>${linkHtml}<br><small>⏱️ ${finalMeal.time} minutes</small>`;
+          resultDiv.classList.add("show");
+          
+          canvas.classList.remove('spinning');
+          spinning = false;
+          spinBtn.disabled = false;
+          spinBtn.textContent = "🎡 Spin Again!";
+          
+          // Add confetti effect (simple version)
+          setTimeout(() => {
+            createConfetti();
+          }, 100);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function createConfetti() {
+      // Simple confetti effect
+      const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.style.position = 'fixed';
+          confetti.style.left = Math.random() * 100 + 'vw';
+          confetti.style.top = '-10px';
+          confetti.style.width = '10px';
+          confetti.style.height = '10px';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.pointerEvents = 'none';
+          confetti.style.zIndex = '9999';
+          confetti.style.borderRadius = '50%';
+          document.body.appendChild(confetti);
+          
+          const animation = confetti.animate([
+            { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+            { transform: `translateY(100vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+          ], {
+            duration: 3000 + Math.random() * 2000,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          });
+          
+          animation.onfinish = () => confetti.remove();
+        }, i * 50);
+      }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !spinning) {
+        e.preventDefault();
+        spinWheel();
+      }
+    });
+
+    // Initialize
+    spinBtn.addEventListener('click', spinWheel);
+    updateMealStats();
+    drawWheel(getFilteredMeals());
+    
+    // Add loading animation
+    setTimeout(() => {
+      updateCheckboxStyling();
+    }, 100);
+  </script>
+</body>
+</html>
