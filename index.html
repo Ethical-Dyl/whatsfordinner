@@ -412,7 +412,26 @@
       if (checkboxes.under30.checked) maxTimes.push(30);
       if (checkboxes.under60.checked) maxTimes.push(60);
       
-      if (maxTimes.length === 0) return allMeals;
+      function getFilteredMeals() {
+  const checkboxes = {
+    under10: document.getElementById('under10'),
+    under30: document.getElementById('under30'),
+    under60: document.getElementById('under60')
+  };
+
+  const maxTimes = [];
+  if (checkboxes.under10.checked) maxTimes.push(10);
+  if (checkboxes.under30.checked) maxTimes.push(30);
+  if (checkboxes.under60.checked) maxTimes.push(60);
+
+  if (maxTimes.length === 0) {
+    // No checkboxes selected — exclude meals over 60 minutes
+    return allMeals.filter(meal => meal.time <= 60);
+  }
+
+  return allMeals.filter(meal => maxTimes.some(time => meal.time <= time));
+}
+
       return allMeals.filter(meal => maxTimes.some(time => meal.time <= time));
     }
 
